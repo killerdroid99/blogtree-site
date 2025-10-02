@@ -1,5 +1,5 @@
+import { useEffect } from "react";
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,5 +9,10 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  return <Welcome />;
+  useEffect(() => {
+    fetch(import.meta.env.VITE_API_URL)
+      .then((res) => res.text())
+      .then((data) => console.log(data));
+  }, []);
+  return <h1>Home</h1>;
 }
