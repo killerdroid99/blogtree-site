@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { Route } from "./+types/home";
-import GoogleButton from "../components/GoogleButton";
+import { useQuery } from "@tanstack/react-query";
+import { useMeQuery } from "~/utils/hooks";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -10,15 +11,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  useEffect(() => {
-    fetch(import.meta.env.VITE_API_URL + "/auth/me", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => console.log(data));
-  }, []);
-  return (
-    <h1>
-      <GoogleButton />
-      Home
-    </h1>
-  );
+  return <h1>Home</h1>;
 }
