@@ -1,10 +1,12 @@
 import { Link } from "react-router";
 import GoogleButton from "./GoogleButton";
 import { useMeQuery, useUserLogout } from "~/utils/hooks";
+import { useLocation } from "react-router";
 
 const Header = () => {
   const { data, isLoading, error } = useMeQuery();
   const { mutate } = useUserLogout();
+  const location = useLocation();
   return (
     <header className="flex justify-between items-center p-4">
       <Link to={"/"}>
@@ -18,7 +20,29 @@ const Header = () => {
         <div>Error: {error.message}</div>
       ) : data?.userName ? (
         <div className="flex items-center gap-2">
-          <div className="rounded-full aspect-square, w-9 overflow-hidden">
+          {location.pathname !== "/create" && (
+            <Link
+              to="/create"
+              className=" text-white p-2 text-sm rounded-full ml-4 cursor-pointer hover:bg-emerald-600 hover:text-zinc-950 transition-all ease-in ring ring-inset flex items-center justify-center-safe gap-1 mr-6"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                className="size-5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 6v12m6-6H6"
+                />
+              </svg>
+              Create post
+            </Link>
+          )}
+          <div className="rounded-full aspect-square size-8 overflow-hidden">
             {data.pfp ? (
               <img src={data.pfp} alt="Profile Picture" />
             ) : (
