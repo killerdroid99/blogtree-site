@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 
 interface Post {
   id: number;
   title: string;
   content: string;
-  createdAt: string;
+  createdAt: Date;
   updatedAt: string;
   authorName: string;
   authorPicture: string | null;
@@ -68,8 +69,21 @@ export const usePostsQuery = (
   });
 };
 
+export const usePostQuery = (id?: number | undefined) => {
+  return useQuery({
+    queryKey: ["post", id],
+    queryFn: () =>
+      fetch(`${import.meta.env.VITE_API_URL}/posts/${id}`, {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json()) as Promise<{ post: Post }>,
+  });
+};
+
 export const useCreatePost = () => {
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: async (input: { title: string; content: string }) => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/posts`, {
@@ -84,13 +98,17 @@ export const useCreatePost = () => {
         },
       });
 
-      return (await res.json()) as { msg: string };
+      return (await res.json()) as {
+        msg: "success" | "failed";
+        errors?: { title?: string[]; content?: string[] };
+        postId: string;
+      };
     },
     mutationKey: ["createPost"],
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["posts"],
-      });
+    onSettled: (data) => {
+      if (data?.msg === "success") {
+        navigate(`/posts/${data?.postId}`);
+      }
     },
   });
 };

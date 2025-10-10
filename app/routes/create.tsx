@@ -1,14 +1,16 @@
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import type { Route } from "./+types/home";
-import { ArrowLeft } from "lucide-react";
+import { Loader } from "lucide-react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import rehypeStringify from "rehype-stringify";
 import rehypeSanitize from "rehype-sanitize";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCreatePost } from "~/utils/hooks";
+import { useNotification } from "~/stores/notification-store";
+import BackButton from "~/components/BackButton";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -40,17 +42,44 @@ export default function Create() {
     };
   }, []);
 
-  const { mutate: createPost, isError } = useCreatePost();
+  const { mutateAsync: createPost, data, isPending } = useCreatePost();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [formErrors, setFormErrors] = useState<{
+    title: string[];
+    content: string[];
+  }>({ title: [], content: [] });
+
+  useEffect(() => {
+    if (data?.msg === "failed")
+      setFormErrors((prev) => {
+        prev.title = data.errors?.title as string[];
+        prev.content = data.errors?.content as string[];
+        return prev;
+      });
+  }, [data?.msg]);
+
+  const { pushNotification } = useNotification();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const title = formData.get("title");
     const content = formData.get("content");
-    if (!title || !content) return;
-    console.log({ title, content });
-    createPost({ title: title as string, content: content as string });
-    if (!isError) navigate("/");
+    await createPost(
+      { title: title as string, content: content as string },
+      {
+        onSettled(data) {
+          if (data?.msg === "failed") {
+            setFormErrors((prev) => {
+              prev.title = data.errors!.title as string[];
+              prev.content = data.errors!.content as string[];
+              return prev;
+            });
+            pushNotification("Failed to create post", "error");
+          }
+        },
+      }
+    );
   };
 
   return (
@@ -71,43 +100,55 @@ export default function Create() {
           </article>
         </div>
       )}
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-10 left-[9dvw] size-fit bg-zinc-950 cursor-pointer"
-      >
-        <ArrowLeft />
-      </button>
+      <BackButton />
 
       <h1 className="text-4xl font-semibold text-center my-10">
-        ✏️ Craft your unique story...
+        ✏️ Craft your thoughts...
       </h1>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="title"
-          className="w-full p-4 outline-1 outline-zinc-500 rounded-xl focus-visible:outline-zinc-300 text-xl transition-all ease-in"
-          placeholder="Title"
-          onChange={(e) => setTitle(e.target.value)}
-          value={title}
-        />
+        <div>
+          <input
+            type="text"
+            name="title"
+            className="w-full p-4 outline-1 outline-zinc-500 rounded-xl focus-visible:outline-zinc-300 text-xl transition-all ease-in"
+            placeholder="Title"
+            onChange={(e) => {
+              setFormErrors((prev) => ({ ...prev, title: [] }));
+              setTitle(e.target.value);
+            }}
+            value={title}
+          />
+          <small className="text-rose-500">{formErrors?.title}</small>
+        </div>
 
-        <textarea
-          name="content"
-          id=""
-          cols={30}
-          rows={20}
-          placeholder="Markdown syntax is supported..."
-          className="w-full p-4 outline-1 outline-zinc-500 rounded-xl focus-visible:outline-zinc-300 resize-none transition-all ease-in"
-          onChange={(e) => setContent(e.target.value)}
-          value={content}
-        />
+        <div>
+          <textarea
+            name="content"
+            id=""
+            cols={30}
+            rows={20}
+            placeholder="Markdown is supported..."
+            className="w-full p-4 outline-1 outline-zinc-500 rounded-xl focus-visible:outline-zinc-300 resize-none transition-all ease-in"
+            onChange={(e) => {
+              setFormErrors((prev) => ({ ...prev, content: [] }));
+              setContent(e.target.value);
+            }}
+            value={content}
+          />
+          <small className="text-rose-500">{formErrors?.content}</small>
+        </div>
 
         <div className="flex items-center gap-5">
           <button
             type="submit"
-            className="p-4 rounded-xl bg-emerald-600 text-zinc-950 cursor-pointer hover:bg-emerald-700 transition-all ease-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            disabled={isPending}
+            className="p-4 rounded-xl bg-emerald-600 text-zinc-950 cursor-pointer hover:bg-emerald-700 transition-all ease-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:bg-zinc-700 disabled:animate-pulse"
           >
-            Create Post
+            {isPending ? (
+              <Loader className="animate-spin" />
+            ) : (
+              <span>Create Post</span>
+            )}
           </button>
           <button
             type="button"
