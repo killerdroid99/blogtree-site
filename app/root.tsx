@@ -11,7 +11,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Notifications from "./components/Notifications";
-import { useNotification } from "./stores/notification-store";
+import { Analytics } from "@vercel/analytics/react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -39,6 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="dark">
         <QueryClientProvider client={queryClient}>
+          <Analytics />
           {children}
         </QueryClientProvider>
         <ScrollRestoration />
