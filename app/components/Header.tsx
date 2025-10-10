@@ -43,14 +43,13 @@ const Header = () => {
             </Link>
           )}
           <div className="rounded-full aspect-square size-8 overflow-hidden">
-            {data.pfp ? (
-              <img src={data.pfp} alt="Profile Picture" />
-            ) : (
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
-                alt="Profile Picture"
-              />
-            )}
+            <img
+              src={
+                data.pfp ??
+                "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+              }
+              alt="Profile Picture"
+            />
           </div>
           <div className="font-semibold text-sm">{data.userName}</div>
           <button
